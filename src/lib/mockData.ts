@@ -61,6 +61,37 @@ export const dashboardData = {
     slaCompliance: 78,
     slaMeta: 85,
   },
+  // Hierarchical big number cards
+  totalCard: {
+    current: 1918,
+    trend: -46,
+    layers: [
+      { layer: 1 as LayerRisk, value: 467, trend: -15 },
+      { layer: 2 as LayerRisk, value: 401, trend: 8 },
+      { layer: 3 as LayerRisk, value: 445, trend: -25 },
+      { layer: 4 as LayerRisk, value: 605, trend: -14 },
+    ],
+  },
+  cisaCriticalCard: {
+    current: 236,
+    trend: -5,
+    layers: [
+      { layer: 1 as LayerRisk, value: 130, trend: -3 },
+      { layer: 2 as LayerRisk, value: 51, trend: 2 },
+      { layer: 3 as LayerRisk, value: 28, trend: -2 },
+      { layer: 4 as LayerRisk, value: 27, trend: -2 },
+    ],
+  },
+  criticalCard: {
+    current: 181,
+    trend: -12,
+    layers: [
+      { layer: 1 as LayerRisk, value: 80, trend: -5 },
+      { layer: 2 as LayerRisk, value: 42, trend: -3 },
+      { layer: 3 as LayerRisk, value: 32, trend: -2 },
+      { layer: 4 as LayerRisk, value: 27, trend: -2 },
+    ],
+  },
   evolution: [
     { month: 'Jan/25', l1: 924, l2: 850, l3: 570, l4: 500, total: 2844 },
     { month: 'Fev/25', l1: 890, l2: 820, l3: 555, l4: 485, total: 2750 },
@@ -92,6 +123,60 @@ export const dashboardData = {
     '181-365d': { critical: 42, cisaCritical: 48,  high: 140 },
     '1+ ano':   { critical: 38, cisaCritical: 35,  high: 86 },
     '2+ anos':  { critical: 30, cisaCritical: 26,  high: 50 },
+  },
+  agingByLayer: {
+    layer1: {
+      total: 467,
+      type: 'Internet' as const,
+      aging: [
+        { range: '30d', critical: 6, cisaCritical: 155, high: 87 },
+        { range: '31-60d', critical: 12, cisaCritical: 148, high: 27 },
+        { range: '61-90d', critical: 8, cisaCritical: 23, high: 24 },
+        { range: '91-180d', critical: 10, cisaCritical: 15, high: 14 },
+        { range: '181-365d', critical: 4, cisaCritical: 25, high: 78 },
+        { range: '1+ ano', critical: 9, cisaCritical: 5, high: 23 },
+        { range: '2+ anos', critical: 4, cisaCritical: 1, high: 4 },
+      ],
+    },
+    layer2: {
+      total: 401,
+      type: 'Internet' as const,
+      aging: [
+        { range: '30d', critical: 3, cisaCritical: 10, high: 52 },
+        { range: '31-60d', critical: 8, cisaCritical: 15, high: 35 },
+        { range: '61-90d', critical: 5, cisaCritical: 8, high: 40 },
+        { range: '91-180d', critical: 12, cisaCritical: 18, high: 48 },
+        { range: '181-365d', critical: 7, cisaCritical: 12, high: 45 },
+        { range: '1+ ano', critical: 4, cisaCritical: 3, high: 38 },
+        { range: '2+ anos', critical: 3, cisaCritical: 2, high: 32 },
+      ],
+    },
+    layer3: {
+      total: 445,
+      type: 'Interna' as const,
+      aging: [
+        { range: '30d', critical: 2, cisaCritical: 5, high: 28 },
+        { range: '31-60d', critical: 4, cisaCritical: 8, high: 32 },
+        { range: '61-90d', critical: 6, cisaCritical: 10, high: 38 },
+        { range: '91-180d', critical: 8, cisaCritical: 12, high: 55 },
+        { range: '181-365d', critical: 5, cisaCritical: 9, high: 62 },
+        { range: '1+ ano', critical: 4, cisaCritical: 6, high: 48 },
+        { range: '2+ anos', critical: 3, cisaCritical: 4, high: 45 },
+      ],
+    },
+    layer4: {
+      total: 605,
+      type: 'Interna' as const,
+      aging: [
+        { range: '30d', critical: 1, cisaCritical: 3, high: 22 },
+        { range: '31-60d', critical: 3, cisaCritical: 5, high: 35 },
+        { range: '61-90d', critical: 4, cisaCritical: 7, high: 42 },
+        { range: '91-180d', critical: 6, cisaCritical: 10, high: 65 },
+        { range: '181-365d', critical: 5, cisaCritical: 8, high: 78 },
+        { range: '1+ ano', critical: 3, cisaCritical: 5, high: 85 },
+        { range: '2+ anos', critical: 2, cisaCritical: 3, high: 112 },
+      ],
+    },
   },
   eolStatus: {
     eol: 1050,

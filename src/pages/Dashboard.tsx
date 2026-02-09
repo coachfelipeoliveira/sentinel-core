@@ -1,57 +1,16 @@
-import { Shield, Globe, Server, Clock, TrendingDown, TrendingUp } from 'lucide-react';
+import { Clock } from 'lucide-react';
+import { MetricCardWithLayers } from '@/components/dashboard/MetricCardWithLayers';
 import { LayerRiskEvolutionChart } from '@/components/dashboard/LayerRiskEvolutionChart';
 import { SeverityLayerTable } from '@/components/dashboard/SeverityLayerTable';
-import { AgingChart } from '@/components/dashboard/AgingChart';
+import { LayerAgingChart } from '@/components/dashboard/LayerAgingChart';
 import { EolStatusChart } from '@/components/dashboard/EolStatusChart';
 import { PriorityMatrixCard } from '@/components/dashboard/PriorityMatrixCard';
 import { SlaGaugeCard } from '@/components/dashboard/SlaGaugeCard';
 import { RecentActivity } from '@/components/dashboard/RecentActivity';
 import { dashboardData } from '@/lib/mockData';
 
-function BigNumberCard({
-  title,
-  value,
-  trend,
-  subtitle,
-  icon,
-  borderColor,
-}: {
-  title: string;
-  value: number;
-  trend: number;
-  subtitle: string;
-  icon: React.ReactNode;
-  borderColor: string;
-}) {
-  const isPositive = trend > 0;
-  const isNegative = trend < 0;
-
-  return (
-    <div className={`metric-card border-l-4 ${borderColor} transition-all duration-300 hover:scale-[1.02]`}>
-      <div className="flex items-start justify-between">
-        <div className="flex-1">
-          <p className="text-sm text-muted-foreground mb-1">{title}</p>
-          <p className="text-3xl font-bold text-foreground">{value.toLocaleString()}</p>
-          <div className="flex items-center gap-1 mt-2 text-xs">
-            {isNegative ? (
-              <TrendingDown className="w-3 h-3 text-status-success" />
-            ) : isPositive ? (
-              <TrendingUp className="w-3 h-3 text-severity-critical" />
-            ) : null}
-            <span className={isNegative ? 'text-status-success' : isPositive ? 'text-severity-critical' : 'text-muted-foreground'}>
-              {trend > 0 ? '+' : ''}{trend}
-            </span>
-            <span className="text-muted-foreground">{subtitle}</span>
-          </div>
-        </div>
-        <div className="p-3 rounded-lg bg-primary/10 text-primary">{icon}</div>
-      </div>
-    </div>
-  );
-}
-
 export default function Dashboard() {
-  const { summary } = dashboardData;
+  const { agingByLayer } = dashboardData;
 
   return (
     <div className="space-y-6">
@@ -67,31 +26,31 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Big Numbers */}
+      {/* Big Numbers - 4 cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <BigNumberCard
+        <MetricCardWithLayers
           title="Total de Vulnerabilidades"
-          value={summary.total}
-          trend={summary.trend}
-          subtitle={summary.trendLabel}
-          icon={<Shield className="w-6 h-6" />}
-          borderColor="border-l-primary"
+          total={dashboardData.totalCard.current}
+          trend={dashboardData.totalCard.trend}
+          subtitle="Em relação a Janeiro/26"
+          layers={dashboardData.totalCard.layers}
+          borderColor="border-t-primary"
         />
-        <BigNumberCard
-          title="Layer Risk 1 e 2 (Internet)"
-          value={summary.layer12}
-          trend={summary.layer12Trend}
-          subtitle="Ativos expostos à Internet"
-          icon={<Globe className="w-6 h-6" />}
-          borderColor="border-l-severity-critical"
+        <MetricCardWithLayers
+          title="Vulnerabilidades CISA Critical"
+          total={dashboardData.cisaCriticalCard.current}
+          trend={dashboardData.cisaCriticalCard.trend}
+          subtitle="Máxima prioridade CISA"
+          layers={dashboardData.cisaCriticalCard.layers}
+          borderColor="border-t-[hsl(0_50%_35%)]"
         />
-        <BigNumberCard
-          title="Layer Risk 3 e 4 (Interna)"
-          value={summary.layer34}
-          trend={summary.layer34Trend}
-          subtitle="Rede interna"
-          icon={<Server className="w-6 h-6" />}
-          borderColor="border-l-severity-medium"
+        <MetricCardWithLayers
+          title="Vulnerabilidades Critical"
+          total={dashboardData.criticalCard.current}
+          trend={dashboardData.criticalCard.trend}
+          subtitle="Requerem remediação urgente"
+          layers={dashboardData.criticalCard.layers}
+          borderColor="border-t-severity-critical"
         />
         <SlaGaugeCard />
       </div>
@@ -104,8 +63,24 @@ export default function Dashboard() {
         <SeverityLayerTable />
       </div>
 
-      {/* Aging */}
-      <AgingChart />
+      {/* Aging by Layer - 4 mini charts */}
+      <div>
+        <div className="mb-4">
+          <h3 className="text-lg font-semibold text-foreground">Análise de Aging (Idade das Vulnerabilidades)</h3>
+          <p className="text-sm text-muted-foreground">Distribuição por tempo de exposição e Layer Risk</p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+          <LayerAgingChart layerNumber={1} total={agingByLayer.layer1.total} type={agingByLayer.layer1.type} data={agingByLayer.layer1.aging} />
+          <LayerAgingChart layerNumber={2} total={agingByLayer.layer2.total} type={agingByLayer.layer2.type} data={agingByLayer.layer2.aging} />
+          <LayerAgingChart layerNumber={3} total={agingByLayer.layer3.total} type={agingByLayer.layer3.type} data={agingByLayer.layer3.aging} />
+          <LayerAgingChart layerNumber={4} total={agingByLayer.layer4.total} type={agingByLayer.layer4.type} data={agingByLayer.layer4.aging} />
+        </div>
+        <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
+          <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-[hsl(0_72%_51%)]" /> Critical</span>
+          <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-[hsl(0_50%_35%)]" /> CISA Critical</span>
+          <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-[hsl(25_95%_53%)]" /> High</span>
+        </div>
+      </div>
 
       {/* EoL + Priority Matrix */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -140,7 +115,7 @@ export default function Dashboard() {
                     </span>
                   </div>
                   <div className="h-2 bg-muted rounded-full overflow-hidden">
-                    <div 
+                    <div
                       className={`h-full transition-all duration-500 ${
                         job.status === 'running' ? 'bg-status-running animate-pulse' :
                         job.status === 'completed' ? 'bg-status-success' : 'bg-status-error'

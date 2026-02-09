@@ -5,10 +5,10 @@ export function LayerRiskEvolutionChart() {
   const data = dashboardData.evolution;
 
   return (
-    <div className="glass-card p-6">
+    <div className="glass-card p-6 h-full flex flex-col">
       <h3 className="text-lg font-semibold mb-1">Evolução de Vulnerabilidades por Layer Risk</h3>
       <p className="text-sm text-muted-foreground mb-4">Jan/25 — Fev/26</p>
-      <div className="h-[320px]">
+      <div className="flex-1 min-h-[320px]">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(230 20% 20%)" />
