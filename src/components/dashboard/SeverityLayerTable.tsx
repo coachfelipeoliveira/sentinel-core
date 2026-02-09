@@ -19,7 +19,7 @@ export function SeverityLayerTable() {
   const grandTotal = Object.values(bySeverity).reduce((s, v) => s + v.total, 0);
 
   return (
-    <div className="glass-card p-6">
+    <div className="glass-card p-6 h-full flex flex-col">
       <h3 className="text-lg font-semibold mb-4">Distribuição por Severidade e Layer</h3>
       <Table>
         <TableHeader>
