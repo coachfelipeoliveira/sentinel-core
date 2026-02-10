@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Search, Filter, Download, Eye, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -55,12 +56,21 @@ const statusStyles: Record<string, string> = {
 };
 
 export default function Vulnerabilities() {
+  const [searchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState('');
   const [severityFilter, setSeverityFilter] = useState<string>('all');
   const [layerFilter, setLayerFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedVulns, setSelectedVulns] = useState<string[]>([]);
   const [selectedVuln, setSelectedVuln] = useState<Vulnerability | null>(null);
+
+  // Apply URL params on mount
+  useEffect(() => {
+    const severity = searchParams.get('severity');
+    const layer = searchParams.get('layer');
+    if (severity) setSeverityFilter(severity);
+    if (layer) setLayerFilter(layer);
+  }, [searchParams]);
 
   const filteredVulns = vulnerabilities.filter(vuln => {
     const matchesSearch =

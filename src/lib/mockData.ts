@@ -188,6 +188,22 @@ export const dashboardData = {
     p3: 276,
     p4: 1523,
   },
+  evolutionBySeverity: [
+    { month: 'Jan/25', critical: 45, cisaCritical: 52, high: 120, medium: 98, low: 78, total: 393 },
+    { month: 'Fev/25', critical: 42, cisaCritical: 48, high: 115, medium: 95, low: 75, total: 375 },
+    { month: 'Mar/25', critical: 40, cisaCritical: 46, high: 110, medium: 90, low: 72, total: 358 },
+    { month: 'Abr/25', critical: 38, cisaCritical: 44, high: 108, medium: 88, low: 70, total: 348 },
+    { month: 'Mai/25', critical: 36, cisaCritical: 42, high: 105, medium: 85, low: 68, total: 336 },
+    { month: 'Jun/25', critical: 34, cisaCritical: 40, high: 100, medium: 82, low: 65, total: 321 },
+    { month: 'Jul/25', critical: 32, cisaCritical: 38, high: 96, medium: 80, low: 62, total: 308 },
+    { month: 'Ago/25', critical: 30, cisaCritical: 36, high: 92, medium: 78, low: 60, total: 296 },
+    { month: 'Set/25', critical: 28, cisaCritical: 34, high: 88, medium: 75, low: 58, total: 283 },
+    { month: 'Out/25', critical: 26, cisaCritical: 32, high: 82, medium: 70, low: 55, total: 265 },
+    { month: 'Nov/25', critical: 24, cisaCritical: 30, high: 76, medium: 68, low: 52, total: 250 },
+    { month: 'Dez/25', critical: 22, cisaCritical: 28, high: 72, medium: 65, low: 50, total: 237 },
+    { month: 'Jan/26', critical: 20, cisaCritical: 26, high: 68, medium: 62, low: 48, total: 224 },
+    { month: 'Fev/26', critical: 18, cisaCritical: 24, high: 65, medium: 60, low: 45, total: 212 },
+  ],
 };
 
 function getAgingBucket(days: number): AgingBucket {
