@@ -1,19 +1,38 @@
+import { useMemo } from 'react';
 import { Clock } from 'lucide-react';
 import { MetricCardWithLayers } from '@/components/dashboard/MetricCardWithLayers';
 import { LayerRiskEvolutionChart } from '@/components/dashboard/LayerRiskEvolutionChart';
+import { EvolutionBySeverityChart } from '@/components/dashboard/EvolutionBySeverityChart';
 import { SeverityLayerTable } from '@/components/dashboard/SeverityLayerTable';
 import { LayerAgingChart } from '@/components/dashboard/LayerAgingChart';
 import { EolStatusChart } from '@/components/dashboard/EolStatusChart';
 import { PriorityMatrixCard } from '@/components/dashboard/PriorityMatrixCard';
 import { SlaGaugeCard } from '@/components/dashboard/SlaGaugeCard';
 import { RecentActivity } from '@/components/dashboard/RecentActivity';
+import { DashboardBreadcrumb } from '@/components/layout/DashboardBreadcrumb';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { dashboardData } from '@/lib/mockData';
+import { useGlobalFilters } from '@/hooks/useGlobalFilters';
+import { getFilteredDashboardData } from '@/lib/empresaData';
 
 export default function Dashboard() {
-  const { agingByLayer } = dashboardData;
+  const { empresa, eolStatus } = useGlobalFilters();
+
+  const filtered = useMemo(
+    () => getFilteredDashboardData(empresa, eolStatus),
+    [empresa, eolStatus]
+  );
+
+  const isFiltered = empresa !== 'Todas as Empresas' || eolStatus !== 'todos';
+  const filterLabel = [
+    empresa !== 'Todas as Empresas' ? empresa : null,
+    eolStatus === 'eol' ? 'Apenas ativos EoL' : eolStatus === 'non-eol' ? 'Apenas ativos Non-EoL' : null,
+  ].filter(Boolean).join(' - ');
 
   return (
     <div className="space-y-6">
+      <DashboardBreadcrumb />
+
       {/* Page header */}
       <div className="flex items-center justify-between">
         <div>
@@ -30,37 +49,60 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCardWithLayers
           title="Total de Vulnerabilidades"
-          total={dashboardData.totalCard.current}
-          trend={dashboardData.totalCard.trend}
-          subtitle="Em relação a Janeiro/26"
-          layers={dashboardData.totalCard.layers}
+          total={filtered.total}
+          trend={filtered.trend}
+          subtitle={isFiltered ? filterLabel : 'Em relação a Janeiro/26'}
+          layers={filtered.layers}
           borderColor="border-t-primary"
         />
         <MetricCardWithLayers
           title="Vulnerabilidades CISA Critical"
-          total={dashboardData.cisaCriticalCard.current}
-          trend={dashboardData.cisaCriticalCard.trend}
+          total={filtered.cisaCritical.current}
+          trend={filtered.cisaCritical.trend}
           subtitle="Máxima prioridade CISA"
-          layers={dashboardData.cisaCriticalCard.layers}
+          layers={filtered.cisaCritical.layers}
           borderColor="border-t-[hsl(0_50%_35%)]"
+          severityFilter="cisaCritical"
+          cardTooltip="Vulnerabilidades que constam na lista CISA Known Exploited Vulnerabilities (KEV)"
         />
         <MetricCardWithLayers
           title="Vulnerabilidades Critical"
-          total={dashboardData.criticalCard.current}
-          trend={dashboardData.criticalCard.trend}
+          total={filtered.critical.current}
+          trend={filtered.critical.trend}
           subtitle="Requerem remediação urgente"
-          layers={dashboardData.criticalCard.layers}
+          layers={filtered.critical.layers}
           borderColor="border-t-severity-critical"
+          severityFilter="critical"
+          cardTooltip="Vulnerabilidades com CVSS >= 9.0 que requerem remediação urgente"
         />
         <SlaGaugeCard />
       </div>
 
-      {/* Evolution chart + Severity table */}
+      {/* Evolution chart with tabs + Severity table */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
-          <LayerRiskEvolutionChart />
+          <div className="glass-card p-6 h-full flex flex-col">
+            <div className="flex items-center justify-between mb-1">
+              <div>
+                <h3 className="text-lg font-semibold">Evolução de Vulnerabilidades</h3>
+                <p className="text-sm text-muted-foreground">Jan/25 — Fev/26</p>
+              </div>
+            </div>
+            <Tabs defaultValue="layer" className="flex-1 flex flex-col mt-3">
+              <TabsList className="self-start">
+                <TabsTrigger value="layer">Por Layer Risk</TabsTrigger>
+                <TabsTrigger value="severity">Por Severidade</TabsTrigger>
+              </TabsList>
+              <TabsContent value="layer" className="flex-1">
+                <LayerRiskEvolutionChart data={filtered.evolution} />
+              </TabsContent>
+              <TabsContent value="severity" className="flex-1">
+                <EvolutionBySeverityChart data={filtered.evolutionBySeverity} />
+              </TabsContent>
+            </Tabs>
+          </div>
         </div>
-        <SeverityLayerTable />
+        <SeverityLayerTable data={filtered.bySeverity} />
       </div>
 
       {/* Aging by Layer - 4 mini charts */}
@@ -70,10 +112,10 @@ export default function Dashboard() {
           <p className="text-sm text-muted-foreground">Distribuição por tempo de exposição e Layer Risk</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-          <LayerAgingChart layerNumber={1} total={agingByLayer.layer1.total} type={agingByLayer.layer1.type} data={agingByLayer.layer1.aging} />
-          <LayerAgingChart layerNumber={2} total={agingByLayer.layer2.total} type={agingByLayer.layer2.type} data={agingByLayer.layer2.aging} />
-          <LayerAgingChart layerNumber={3} total={agingByLayer.layer3.total} type={agingByLayer.layer3.type} data={agingByLayer.layer3.aging} />
-          <LayerAgingChart layerNumber={4} total={agingByLayer.layer4.total} type={agingByLayer.layer4.type} data={agingByLayer.layer4.aging} />
+          <LayerAgingChart layerNumber={1} total={filtered.agingByLayer.layer1.total} type={filtered.agingByLayer.layer1.type} data={filtered.agingByLayer.layer1.aging} />
+          <LayerAgingChart layerNumber={2} total={filtered.agingByLayer.layer2.total} type={filtered.agingByLayer.layer2.type} data={filtered.agingByLayer.layer2.aging} />
+          <LayerAgingChart layerNumber={3} total={filtered.agingByLayer.layer3.total} type={filtered.agingByLayer.layer3.type} data={filtered.agingByLayer.layer3.aging} />
+          <LayerAgingChart layerNumber={4} total={filtered.agingByLayer.layer4.total} type={filtered.agingByLayer.layer4.type} data={filtered.agingByLayer.layer4.aging} />
         </div>
         <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
           <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-[hsl(0_72%_51%)]" /> Critical</span>
