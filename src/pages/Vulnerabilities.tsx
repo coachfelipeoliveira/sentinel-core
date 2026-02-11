@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Search, Filter, Download, Eye, ExternalLink } from 'lucide-react';
+import { Search, Filter, Download, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -11,11 +11,9 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle,
-} from '@/components/ui/dialog';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { vulnerabilities, Vulnerability, Severity, LayerRisk, Priority } from '@/lib/mockData';
+import { vulnerabilities, Vulnerability, Severity, Priority } from '@/lib/mockData';
+import { getVulnerabilityDetail, VulnerabilityDetail } from '@/lib/vulnerabilityDetailsData';
+import VulnerabilityDetailsModal from '@/components/vulnerabilities/VulnerabilityDetailsModal';
 import { cn } from '@/lib/utils';
 
 const severityLabels: Record<Severity, string> = {
@@ -55,6 +53,46 @@ const statusStyles: Record<string, string> = {
   accepted: 'bg-muted text-muted-foreground',
 };
 
+// Build a fallback VulnerabilityDetail from the basic Vulnerability record
+function buildFallbackDetail(vuln: Vulnerability): VulnerabilityDetail {
+  return {
+    qid: vuln.qid,
+    title: vuln.title,
+    severity: vuln.severity,
+    layerRisk: vuln.layerRisk,
+    priority: vuln.priority,
+    status: vuln.status,
+    description: vuln.description,
+    vendor: 'N/A',
+    product: 'N/A',
+    affectedVersions: 'N/A',
+    portProtocol: 'N/A',
+    detectedDate: vuln.detectedDate,
+    publishedDate: vuln.detectedDate,
+    cvss: vuln.severity === 'critical' || vuln.severity === 'cisaCritical' ? 9.8 : vuln.severity === 'high' ? 7.5 : 5.0,
+    cvssVector: 'N/A',
+    cveIds: [],
+    exploitability: vuln.exploitability === 'active' ? 'Alta' : vuln.exploitability === 'poc' ? 'Média' : 'Baixa',
+    publicExploit: vuln.exploitability === 'active' || vuln.exploitability === 'poc',
+    cisaKev: vuln.severity === 'cisaCritical',
+    mitreMapping: vuln.mitreAttack.map(t => ({ id: t, name: t, tactic: 'N/A', subtechniques: [] })),
+    compliance: vuln.compliance,
+    assetCriticality: vuln.layerRisk <= 2 ? 'Crítica' : 'Média',
+    businessImpact: 'Avaliação de impacto pendente.',
+    remediationSteps: vuln.remediationSteps,
+    workarounds: [],
+    references: vuln.references.map(r => ({ type: 'Link', title: r, url: r })),
+    affectedAssets: [{ id: 1, hostname: vuln.asset, ip: '10.0.0.1', type: vuln.assetType, os: 'N/A', layer: vuln.layerRisk, patchStatus: 'Pendente', lastDetected: vuln.detectedDate }],
+    timeline: [{ type: 'detected', title: 'Detectada', description: 'Detectada pelo Qualys', timestamp: vuln.detectedDate + 'T12:00:00Z', user: 'Sistema Qualys' }],
+    notes: [],
+    eol: vuln.eol,
+    agingDays: vuln.agingDays,
+    agingBucket: vuln.agingBucket,
+    asset: vuln.asset,
+    assetType: vuln.assetType,
+  };
+}
+
 export default function Vulnerabilities() {
   const [searchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState('');
@@ -62,9 +100,8 @@ export default function Vulnerabilities() {
   const [layerFilter, setLayerFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedVulns, setSelectedVulns] = useState<string[]>([]);
-  const [selectedVuln, setSelectedVuln] = useState<Vulnerability | null>(null);
+  const [detailVuln, setDetailVuln] = useState<VulnerabilityDetail | null>(null);
 
-  // Apply URL params on mount
   useEffect(() => {
     const severity = searchParams.get('severity');
     const layer = searchParams.get('layer');
@@ -82,6 +119,11 @@ export default function Vulnerabilities() {
     const matchesStatus = statusFilter === 'all' || vuln.status === statusFilter;
     return matchesSearch && matchesSeverity && matchesLayer && matchesStatus;
   });
+
+  const handleRowClick = (vuln: Vulnerability) => {
+    const detail = getVulnerabilityDetail(vuln.qid);
+    setDetailVuln(detail || buildFallbackDetail(vuln));
+  };
 
   const toggleSelectAll = () => {
     setSelectedVulns(prev => prev.length === filteredVulns.length ? [] : filteredVulns.map(v => v.id));
@@ -196,8 +238,11 @@ export default function Vulnerabilities() {
             {filteredVulns.map((vuln) => (
               <TableRow
                 key={vuln.id}
-                className={cn('border-border cursor-pointer', selectedVulns.includes(vuln.id) && 'bg-primary/5')}
-                onClick={() => setSelectedVuln(vuln)}
+                className={cn(
+                  'border-border cursor-pointer hover:bg-accent/50 transition-all duration-150',
+                  selectedVulns.includes(vuln.id) && 'bg-primary/5',
+                )}
+                onClick={() => handleRowClick(vuln)}
               >
                 <TableCell onClick={(e) => e.stopPropagation()}>
                   <Checkbox checked={selectedVulns.includes(vuln.id)} onCheckedChange={() => toggleSelect(vuln.id)} />
@@ -252,7 +297,7 @@ export default function Vulnerabilities() {
                   </div>
                 </TableCell>
                 <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                  <Button variant="ghost" size="icon" onClick={() => setSelectedVuln(vuln)}>
+                  <Button variant="ghost" size="icon" onClick={() => handleRowClick(vuln)}>
                     <Eye className="w-4 h-4" />
                   </Button>
                 </TableCell>
@@ -262,114 +307,12 @@ export default function Vulnerabilities() {
         </Table>
       </div>
 
-      {/* Detail modal */}
-      <Dialog open={!!selectedVuln} onOpenChange={() => setSelectedVuln(null)}>
-        <DialogContent className="max-w-3xl max-h-[90vh]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-3">
-              <code className="text-primary">QID {selectedVuln?.qid}</code>
-              {selectedVuln && <Badge className={severityStyles[selectedVuln.severity]}>{severityLabels[selectedVuln.severity]}</Badge>}
-              {selectedVuln && (
-                <span className={cn('px-2 py-1 rounded text-xs font-bold', priorityColors[selectedVuln.priority])}>
-                  {selectedVuln.priority}
-                </span>
-              )}
-            </DialogTitle>
-          </DialogHeader>
-
-          {selectedVuln && (
-            <ScrollArea className="max-h-[70vh] pr-4">
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">{selectedVuln.title}</h3>
-                  <p className="text-muted-foreground">{selectedVuln.description}</p>
-                </div>
-
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="glass-card p-3">
-                    <p className="text-xs text-muted-foreground mb-1">Layer Risk</p>
-                    <p className="text-2xl font-bold text-primary">L{selectedVuln.layerRisk}</p>
-                  </div>
-                  <div className="glass-card p-3">
-                    <p className="text-xs text-muted-foreground mb-1">Prioridade</p>
-                    <p className={cn('text-2xl font-bold', priorityColors[selectedVuln.priority].split(' ')[0])}>{selectedVuln.priority}</p>
-                  </div>
-                  <div className="glass-card p-3">
-                    <p className="text-xs text-muted-foreground mb-1">Aging</p>
-                    <p className="text-lg font-bold text-foreground">{selectedVuln.agingDays}d</p>
-                    <p className="text-xs text-muted-foreground">{selectedVuln.agingBucket}</p>
-                  </div>
-                  <div className="glass-card p-3">
-                    <p className="text-xs text-muted-foreground mb-1">Status</p>
-                    <Badge className={statusStyles[selectedVuln.status]}>{statusLabels[selectedVuln.status]}</Badge>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <h4 className="font-semibold mb-2">Ativo Afetado</h4>
-                    <div className="glass-card p-3">
-                      <p className="font-mono text-sm">{selectedVuln.asset}</p>
-                      <p className="text-xs text-muted-foreground">{selectedVuln.assetType}</p>
-                      {selectedVuln.eol && <Badge className="mt-2 bg-severity-critical/20 text-severity-critical text-xs">End-of-Life</Badge>}
-                    </div>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold mb-2">Compliance</h4>
-                    <div className="glass-card p-3">
-                      {selectedVuln.compliance.length > 0 ? (
-                        <div className="flex flex-wrap gap-2">
-                          {selectedVuln.compliance.map(tag => (
-                            <Badge key={tag} variant="outline" className="font-mono">{tag}</Badge>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-sm text-muted-foreground">Sem tags de compliance</p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <h4 className="font-semibold mb-2">MITRE ATT&CK</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedVuln.mitreAttack.map(t => (
-                      <Badge key={t} variant="outline" className="font-mono">{t}</Badge>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <h4 className="font-semibold mb-2">Passos de Remediação</h4>
-                  <ol className="list-decimal list-inside space-y-2">
-                    {selectedVuln.remediationSteps.map((step, i) => (
-                      <li key={i} className="text-sm text-muted-foreground">{step}</li>
-                    ))}
-                  </ol>
-                </div>
-
-                <div>
-                  <h4 className="font-semibold mb-2">Referências</h4>
-                  <div className="space-y-1">
-                    {selectedVuln.references.map((ref, i) => (
-                      <a key={i} href={ref} target="_blank" rel="noopener noreferrer"
-                        className="flex items-center gap-2 text-sm text-primary hover:underline">
-                        <ExternalLink className="w-3 h-3" />{ref}
-                      </a>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="flex gap-2 pt-4 border-t border-border">
-                  <Button className="flex-1">Atribuir</Button>
-                  <Button variant="outline" className="flex-1">Atualizar Status</Button>
-                  <Button variant="outline" className="flex-1">Adicionar Nota</Button>
-                </div>
-              </div>
-            </ScrollArea>
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* Fullscreen Detail Modal */}
+      <VulnerabilityDetailsModal
+        vuln={detailVuln}
+        open={!!detailVuln}
+        onClose={() => setDetailVuln(null)}
+      />
     </div>
   );
 }
