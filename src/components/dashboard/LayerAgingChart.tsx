@@ -1,5 +1,7 @@
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useNavigate } from 'react-router-dom';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { cn } from '@/lib/utils';
+import { useGlobalFilters } from '@/hooks/useGlobalFilters';
 
 interface AgingEntry {
   range: string;
@@ -29,7 +31,29 @@ const layerTextColors: Record<number, string> = {
   4: 'text-[hsl(200_80%_50%)]',
 };
 
+const agingRangeToParam: Record<string, string> = {
+  '30d': '0-30',
+  '31-60d': '31-60',
+  '61-90d': '61-90',
+  '91-180d': '91-180',
+  '181-365d': '181-365',
+  '1+ ano': '366-730',
+  '2+ anos': '730+',
+};
+
 export function LayerAgingChart({ layerNumber, total, type, data }: LayerAgingChartProps) {
+  const navigate = useNavigate();
+  const { empresa } = useGlobalFilters();
+
+  const handleBarClick = (entry: AgingEntry) => {
+    const params = new URLSearchParams();
+    params.set('layer', layerNumber.toString());
+    const agingParam = agingRangeToParam[entry.range];
+    if (agingParam) params.set('aging', agingParam);
+    if (empresa !== 'Todas as Empresas') params.set('empresa', empresa);
+    navigate(`/vulnerabilities?${params.toString()}`);
+  };
+
   return (
     <div className={cn('glass-card p-4 border-t-4 transition-all duration-300 hover:shadow-lg', layerBorderColors[layerNumber])}>
       <div className="mb-3">
@@ -52,9 +76,40 @@ export function LayerAgingChart({ layerNumber, total, type, data }: LayerAgingCh
                 fontSize: '12px',
               }}
             />
-            <Bar dataKey="critical" name="Critical" stackId="a" fill="hsl(0 72% 51%)" />
-            <Bar dataKey="cisaCritical" name="CISA Critical" stackId="a" fill="hsl(0 50% 35%)" />
-            <Bar dataKey="high" name="High" stackId="a" fill="hsl(25 95% 53%)" radius={[0, 4, 4, 0]} />
+            <Bar
+              dataKey="critical"
+              name="Critical"
+              stackId="a"
+              fill="hsl(0 72% 51%)"
+              className="cursor-pointer"
+              onClick={(_data: any, _index: number) => {
+                const entry = data[_index];
+                if (entry) handleBarClick(entry);
+              }}
+            />
+            <Bar
+              dataKey="cisaCritical"
+              name="CISA Critical"
+              stackId="a"
+              fill="hsl(0 50% 35%)"
+              className="cursor-pointer"
+              onClick={(_data: any, _index: number) => {
+                const entry = data[_index];
+                if (entry) handleBarClick(entry);
+              }}
+            />
+            <Bar
+              dataKey="high"
+              name="High"
+              stackId="a"
+              fill="hsl(25 95% 53%)"
+              radius={[0, 4, 4, 0]}
+              className="cursor-pointer"
+              onClick={(_data: any, _index: number) => {
+                const entry = data[_index];
+                if (entry) handleBarClick(entry);
+              }}
+            />
           </BarChart>
         </ResponsiveContainer>
       </div>
