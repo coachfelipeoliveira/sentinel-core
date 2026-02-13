@@ -29,11 +29,11 @@ const severityLabels: Record<Severity, string> = {
 };
 
 const severityStyles: Record<Severity, string> = {
-  critical: 'severity-badge-critical',
+  critical: 'bg-[hsl(0_72%_51%/0.15)] text-[hsl(0_72%_51%)] border border-[hsl(0_72%_51%/0.3)]',
   cisaCritical: 'bg-[hsl(0_50%_35%/0.2)] text-[hsl(0_50%_50%)] border border-[hsl(0_50%_35%/0.3)]',
-  high: 'severity-badge-high',
-  medium: 'severity-badge-medium',
-  low: 'severity-badge-low',
+  high: 'bg-[hsl(25_95%_53%/0.15)] text-[hsl(25_95%_53%)] border border-[hsl(25_95%_53%/0.3)]',
+  medium: 'bg-[hsl(45_93%_47%/0.15)] text-[hsl(45_93%_47%)] border border-[hsl(45_93%_47%/0.3)]',
+  low: 'bg-[hsl(200_80%_50%/0.15)] text-[hsl(200_80%_50%)] border border-[hsl(200_80%_50%/0.3)]',
 };
 
 const priorityColors: Record<Priority, string> = {
@@ -129,6 +129,25 @@ export default function Vulnerabilities() {
     if (severity) setSeverityFilter(severity);
     if (urlLayer) setLayerFilter(urlLayer);
     if (urlAging) setAgingFilter(urlAging);
+
+    // Open modal if qid param present (from global search)
+    const qidParam = searchParams.get('qid');
+    if (qidParam) {
+      const qid = parseInt(qidParam, 10);
+      const detail = getVulnerabilityDetail(qid);
+      if (detail) {
+        setDetailVuln(detail);
+      } else {
+        const vuln = vulnerabilities.find(v => v.qid === qid);
+        if (vuln) setDetailVuln(buildFallbackDetail(vuln));
+      }
+    }
+
+    // Pre-fill search if hostname param present
+    const hostnameParam = searchParams.get('hostname');
+    if (hostnameParam) {
+      setSearchTerm(hostnameParam);
+    }
   }, [searchParams]);
 
   const clearUrlFilters = () => {
@@ -347,9 +366,8 @@ export default function Vulnerabilities() {
                   <TableHead>Qtd Ativos</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Aging</TableHead>
-                  <TableHead>EoL</TableHead>
-                  <TableHead>Compliance</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
+                      <TableHead>EoL</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -409,19 +427,11 @@ export default function Vulnerabilities() {
                         <span className="text-xs font-mono text-muted-foreground">{vuln.agingBucket}</span>
                       </TableCell>
                       <TableCell>
-                        {vuln.eol ? (
+                      {vuln.eol ? (
                           <Badge className="bg-severity-critical/20 text-severity-critical text-xs">EoL</Badge>
                         ) : (
-                          <span className="text-xs text-muted-foreground">—</span>
+                          <Badge className="bg-status-success/20 text-status-success text-xs">Non-EoL</Badge>
                         )}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-1">
-                          {vuln.compliance.map(tag => (
-                            <Badge key={tag} variant="outline" className="text-[10px] px-1">{tag}</Badge>
-                          ))}
-                          {vuln.compliance.length === 0 && <span className="text-xs text-muted-foreground">—</span>}
-                        </div>
                       </TableCell>
                       <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                         <Button variant="ghost" size="icon" onClick={() => handleRowClick(vuln)}>
