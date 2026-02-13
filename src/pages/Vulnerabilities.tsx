@@ -29,11 +29,11 @@ const severityLabels: Record<Severity, string> = {
 };
 
 const severityStyles: Record<Severity, string> = {
-  critical: 'bg-[hsl(0_72%_51%/0.15)] text-[hsl(0_72%_51%)] border border-[hsl(0_72%_51%/0.3)]',
-  cisaCritical: 'bg-[hsl(0_50%_35%/0.2)] text-[hsl(0_50%_50%)] border border-[hsl(0_50%_35%/0.3)]',
-  high: 'bg-[hsl(25_95%_53%/0.15)] text-[hsl(25_95%_53%)] border border-[hsl(25_95%_53%/0.3)]',
-  medium: 'bg-[hsl(45_93%_47%/0.15)] text-[hsl(45_93%_47%)] border border-[hsl(45_93%_47%/0.3)]',
-  low: 'bg-[hsl(200_80%_50%/0.15)] text-[hsl(200_80%_50%)] border border-[hsl(200_80%_50%/0.3)]',
+  critical: 'bg-[#DC2626]/10 text-[#DC2626] border border-[#DC2626]/20',
+  cisaCritical: 'bg-[#991B1B]/15 text-[#991B1B] border border-[#991B1B]/25',
+  high: 'bg-[#EA580C]/10 text-[#EA580C] border border-[#EA580C]/20',
+  medium: 'bg-[#D97706]/10 text-[#D97706] border border-[#D97706]/20',
+  low: 'bg-[#2563EB]/10 text-[#2563EB] border border-[#2563EB]/20',
 };
 
 const priorityColors: Record<Priority, string> = {
